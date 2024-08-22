@@ -34,5 +34,8 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
 
     //TODO: 處理資料邏輯代寫
     private void parseHTML(Document doc) {
+
+        log.info("doc is : {}", doc);
+        
     }
 }
