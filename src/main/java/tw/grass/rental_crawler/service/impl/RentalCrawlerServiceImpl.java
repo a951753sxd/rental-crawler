@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import tw.grass.rental_crawler.model.RentalListing;
 import tw.grass.rental_crawler.service.RentalCrawlerService;
 
 @Service
@@ -79,6 +80,14 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             // 提取距離捷運
             String distanceToMrtName = listing.select("div.item-info-txt i.house-metro").next().text();
             String distanceToMRT = listing.select("div.item-info-txt i.house-metro").next().next().text();
+
+            RentalListing rentalList = new RentalListing();
+            rentalList.setTitle(title);
+            rentalList.setLink(link);
+            rentalList.setAddress(address);
+            rentalList.setPrice(price);
+            rentalList.setFloorAndArea(title);
+            rentalList.setDistanceToMRT(title);
             
             // 輸出房源資訊
             log.info("Title: {}", title);
