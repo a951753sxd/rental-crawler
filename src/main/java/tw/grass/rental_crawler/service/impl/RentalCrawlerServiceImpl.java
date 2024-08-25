@@ -4,6 +4,8 @@ import java.time.Duration;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -59,10 +61,33 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
         }
     }
 
-    //TODO: 處理資料邏輯代寫
     private void parseHTML(Document doc) {
+        Elements listings = doc.select("div.item-info");
 
-        log.info("doc is : {}", doc);
-        
+        // 迴圈遍歷每個房源資訊
+        for (Element listing : listings) {
+            // 提取標題
+            String title = listing.select("a.link").attr("title");
+            // 提取連結
+            String link = listing.select("a.link").attr("href");
+            // 提取地址
+            String address = listing.select("div.item-info-txt i.house-place").next().text();
+            // 提取價格
+            String price = listing.select("div.item-info-price strong").text();
+            // 提取樓層與坪數
+            String floorAndArea = listing.select("div.item-info-txt").get(1).text();
+            // 提取距離捷運
+            String distanceToMrtName = listing.select("div.item-info-txt i.house-metro").next().text();
+            String distanceToMRT = listing.select("div.item-info-txt i.house-metro").next().next().text();
+            
+            // 輸出房源資訊
+            log.info("Title: {}", title);
+            log.info("Link: {}", link);
+            log.info("Address: {}", address);
+            log.info("Price: {} 元/月", price);
+            log.info("Floor and Area: {}", floorAndArea);
+            log.info("Distance to MRT: {}", distanceToMrtName + distanceToMRT);
+            log.info("---------------------------------------");
+        }
     }
 }
