@@ -11,6 +11,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import tw.grass.rental_crawler.model.RentalListing;
@@ -20,13 +21,19 @@ import tw.grass.rental_crawler.service.RentalCrawlerService;
 public class RentalCrawlerServiceImpl implements RentalCrawlerService {
 
     Logger log = LoggerFactory.getLogger(RentalCrawlerService.class);
+    
+    @Value("${webdriver.name}")
+    private String webdriverName;
+    
+    @Value("${webdriver.path}")
+    private String webdriverPath;
 
     @Override
     public void fetchRentalData() {
         log.info("Starting to fetch rental data...");
 
         // 設定 ChromeDriver 路徑
-        System.setProperty("webdriver.chrome.driver", "./chromedriver-win64/chromedriver.exe");
+        System.setProperty(webdriverName, webdriverPath);
 
         // 設定 ChromeOptions
         ChromeOptions options = new ChromeOptions();
