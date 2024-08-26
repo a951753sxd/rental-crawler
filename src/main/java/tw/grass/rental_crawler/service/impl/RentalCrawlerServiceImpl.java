@@ -2,7 +2,11 @@ package tw.grass.rental_crawler.service.impl;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,45 +20,56 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import tw.grass.rental_crawler.model.RentalInfo;
+import jakarta.annotation.PostConstruct;
+import tw.grass.rental_crawler.model.RentalCatalog;
+import tw.grass.rental_crawler.model.RentalDetail;
 import tw.grass.rental_crawler.service.RentalCrawlerService;
 
 @Service
 public class RentalCrawlerServiceImpl implements RentalCrawlerService {
 
     Logger log = LoggerFactory.getLogger(RentalCrawlerService.class);
-    
+
     @Value("${webdriver.name}")
     private String webdriverName;
-    
+
     @Value("${webdriver.path}")
     private String webdriverPath;
 
+    private WebDriver driver;
+
+    @PostConstruct
+    public void init() {
+        webDriverInit();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            driver.quit();
+        }));
+    }
+
     @Override
-    public void fetchRentalData() {
+    public List<RentalCatalog> fetchLatestRentalCatalog() {
         log.info("Starting to fetch rental data...");
-
-        WebDriver driver = webDriverInit();
-
         try {
-            //這邊使用591的條件other=newPost:新上架、sort=posttime_desc:排序為新到舊
-            String urlString = "https://rent.591.com.tw/list?other=newPost&sort=posttime_desc";
-            driver.get(urlString);
-            
-            String pageSource = driver.getPageSource();
-            Document doc = Jsoup.parse(pageSource);
-            
-            parseHTML(doc);
+            // 這邊使用591的條件other=newPost:新上架、sort=posttime_desc:排序為新到舊
+            Document doc = getJsoupDoc("https://rent.591.com.tw/list?other=newPost&sort=posttime_desc");
+            List<RentalCatalog> rentaInfoList = parseRentalCatalog(doc);
             log.info("Successfully fetched rental data");
+            return rentaInfoList;
         } catch (Exception e) {
             log.error("Error while fetching rental data", e);
-        } finally {
-            driver.quit();
+            return Collections.emptyList();
         }
     }
 
+    private Document getJsoupDoc(String urlString) {
+        driver.get(urlString);
+        String pageSource = driver.getPageSource();
+        Document doc = Jsoup.parse(pageSource);
+        return doc;
+    }
 
-    private WebDriver webDriverInit() {
+    private void webDriverInit() {
         // 設定 ChromeDriver 路徑
         System.setProperty(webdriverName, webdriverPath);
 
@@ -64,15 +79,13 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
         options.addArguments("--disable-gpu"); // 避免某些操作系統的問題
         options.addArguments("--window-size=1920,1080"); // 設置窗口大小
 
-        WebDriver driver = new ChromeDriver(options);
+        driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-        return driver;
     }
 
+    private List<RentalCatalog> parseRentalCatalog(Document doc) {
+        List<RentalCatalog> list = new ArrayList<RentalCatalog>();
 
-    private void parseHTML(Document doc) {
-        List<RentalInfo> list = new ArrayList<RentalInfo>();
-        
         Elements listings = doc.select("div.item-info");
         for (Element listing : listings) {
             String title = listing.select("a.link").attr("title");
@@ -83,14 +96,62 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             String distanceToMrtName = listing.select("div.item-info-txt i.house-metro").next().text();
             String distanceToMRT = listing.select("div.item-info-txt i.house-metro").next().next().text();
 
-            RentalInfo rentalIfo = new RentalInfo();
+            RentalCatalog rentalIfo = new RentalCatalog();
             rentalIfo.setTitle(title);
             rentalIfo.setLink(link);
             rentalIfo.setAddress(address);
             rentalIfo.setPrice(price);
             rentalIfo.setFloorAndArea(floorAndArea);
-            rentalIfo.setDistanceToMRT(distanceToMrtName+distanceToMRT);
+            rentalIfo.setDistanceToMRT(distanceToMrtName + distanceToMRT);
             list.add(rentalIfo);
         }
+
+        list = list.stream().limit(3).collect(Collectors.toList());
+        return list;
+    }
+
+    @Override
+    public RentalDetail fetchRentalDetail(RentalCatalog rentalCatalog) {
+        log.info("Starting to fetch rental detail data...");
+        String detailUrl = rentalCatalog.getLink();
+        Document doc = getJsoupDoc(detailUrl);
+
+        RentalDetail rentalDetail = parseRentalDetail(doc);
+        rentalDetail.setAddress(rentalDetail.getAddress());
+        rentalDetail.setPrice(rentalDetail.getPrice());
+        rentalDetail.setFloorAndArea(rentalDetail.getFloorAndArea());
+
+        return rentalDetail;
+    }
+
+    private RentalDetail parseRentalDetail(Document doc) {
+        RentalDetail rentalDetail = new RentalDetail();
+
+        // 租住說明
+        String rentalDescription = doc.select("div.service-cate:has(i.icon-desc) span").text();
+        rentalDetail.setRentalDescription(rentalDescription);
+        // 房屋守則
+        String houseRules = doc.select("div.service-cate:has(i.icon-rule) span").text();
+        rentalDetail.setHouseRules(houseRules);
+
+        // 設備列表
+        rentalDetail.setHasFridge(!doc.select("dl:has(i.house-fridge-big)").hasClass("del"));
+        rentalDetail.setHasWasher(!doc.select("dl:has(i.house-washer)").hasClass("del"));
+        rentalDetail.setHasTv(!doc.select("dl:has(i.house-tv)").hasClass("del"));
+        rentalDetail.setHasCold(!doc.select("dl:has(i.house-cold)").hasClass("del"));
+        rentalDetail.setHasHeater(!doc.select("dl:has(i.house-heater)").hasClass("del"));
+        rentalDetail.setHasBed(!doc.select("dl:has(i.house-bed)").hasClass("del"));
+        rentalDetail.setHasCloset(!doc.select("dl:has(i.house-closet)").hasClass("del"));
+        rentalDetail.setHasFourth(!doc.select("dl:has(i.house-fourth)").hasClass("del"));
+        rentalDetail.setHasWifi(!doc.select("dl:has(i.house-wifi-big)").hasClass("del"));
+        rentalDetail.setHasGas(!doc.select("dl:has(i.house-gas)").hasClass("del"));
+        rentalDetail.setHasSofa(!doc.select("dl:has(i.house-sofa)").hasClass("del"));
+        rentalDetail.setHasTable(!doc.select("dl:has(i.house-table)").hasClass("del"));
+        rentalDetail.setHasBalcony(!doc.select("dl:has(i.house-balcony)").hasClass("del"));
+        rentalDetail.setHasLift(!doc.select("dl:has(i.house-lift)").hasClass("del"));
+        rentalDetail.setHasParking(!doc.select("dl:has(i.house-parking)").hasClass("del"));
+
+        log.info(rentalDetail.getInfo());
+        return rentalDetail;
     }
 }

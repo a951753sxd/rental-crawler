@@ -1,10 +1,13 @@
 package tw.grass.rental_crawler;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
+import tw.grass.rental_crawler.model.RentalCatalog;
 import tw.grass.rental_crawler.service.RentalCrawlerService;
 
 @Component
@@ -15,6 +18,8 @@ public class StartupRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        rentalCrawlerService.fetchRentalData();
+        List<RentalCatalog> list = rentalCrawlerService.fetchLatestRentalCatalog();
+        list.stream().forEach(obj ->rentalCrawlerService.fetchRentalDetail(obj));
+
     }
 }
