@@ -3,9 +3,7 @@ package tw.grass.rental_crawler.service.impl;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
@@ -17,12 +15,13 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
-import tw.grass.rental_crawler.model.RentalCatalog;
-import tw.grass.rental_crawler.model.RentalDetail;
+import tw.grass.rental_crawler.model.RentalCatalogDTO;
+import tw.grass.rental_crawler.model.RentalDetailDTO;
 import tw.grass.rental_crawler.service.RentalCrawlerService;
 
 @Service
@@ -48,12 +47,12 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
     }
 
     @Override
-    public List<RentalCatalog> fetchLatestRentalCatalog() {
+    public List<RentalCatalogDTO> fetchLatestRentalCatalog() {
         log.info("Starting to fetch rental data...");
         try {
             // 這邊使用591的條件other=newPost:新上架、sort=posttime_desc:排序為新到舊
             Document doc = getJsoupDoc("https://rent.591.com.tw/list?other=newPost&sort=posttime_desc");
-            List<RentalCatalog> rentaInfoList = parseRentalCatalog(doc);
+            List<RentalCatalogDTO> rentaInfoList = parseRentalCatalog(doc);
             log.info("Successfully fetched rental data");
             return rentaInfoList;
         } catch (Exception e) {
@@ -83,8 +82,8 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
     }
 
-    private List<RentalCatalog> parseRentalCatalog(Document doc) {
-        List<RentalCatalog> list = new ArrayList<RentalCatalog>();
+    private List<RentalCatalogDTO> parseRentalCatalog(Document doc) {
+        List<RentalCatalogDTO> list = new ArrayList<RentalCatalogDTO>();
 
         Elements listings = doc.select("div.item-info");
         for (Element listing : listings) {
@@ -96,7 +95,7 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             String distanceToMrtName = listing.select("div.item-info-txt i.house-metro").next().text();
             String distanceToMRT = listing.select("div.item-info-txt i.house-metro").next().next().text();
 
-            RentalCatalog rentalIfo = new RentalCatalog();
+            RentalCatalogDTO rentalIfo = new RentalCatalogDTO();
             rentalIfo.setTitle(title);
             rentalIfo.setLink(link);
             rentalIfo.setAddress(address);
@@ -104,6 +103,7 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             rentalIfo.setFloorAndArea(floorAndArea);
             rentalIfo.setDistanceToMRT(distanceToMrtName + distanceToMRT);
             list.add(rentalIfo);
+
         }
 
         list = list.stream().limit(3).collect(Collectors.toList());
@@ -111,12 +111,12 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
     }
 
     @Override
-    public RentalDetail fetchRentalDetail(RentalCatalog rentalCatalog) {
+    public RentalDetailDTO fetchRentalDetail(RentalCatalogDTO rentalCatalog) {
         log.info("Starting to fetch rental detail data...");
         String detailUrl = rentalCatalog.getLink();
         Document doc = getJsoupDoc(detailUrl);
 
-        RentalDetail rentalDetail = parseRentalDetail(doc);
+        RentalDetailDTO rentalDetail = parseRentalDetail(doc);
         rentalDetail.setAddress(rentalDetail.getAddress());
         rentalDetail.setPrice(rentalDetail.getPrice());
         rentalDetail.setFloorAndArea(rentalDetail.getFloorAndArea());
@@ -124,8 +124,8 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
         return rentalDetail;
     }
 
-    private RentalDetail parseRentalDetail(Document doc) {
-        RentalDetail rentalDetail = new RentalDetail();
+    private RentalDetailDTO parseRentalDetail(Document doc) {
+        RentalDetailDTO rentalDetail = new RentalDetailDTO();
 
         // 租住說明
         String rentalDescription = doc.select("div.service-cate:has(i.icon-desc) span").text();

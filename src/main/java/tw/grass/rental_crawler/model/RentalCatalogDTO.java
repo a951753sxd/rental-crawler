@@ -3,7 +3,7 @@ package tw.grass.rental_crawler.model;
 import lombok.Data;
 
 @Data
-public class RentalCatalog {
+public class RentalCatalogDTO {
     private String title;
     private String link;
     private String address;
