@@ -20,14 +20,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+import tw.grass.rental_crawler.entity.RentalDetail;
 import tw.grass.rental_crawler.model.RentalCatalogDTO;
 import tw.grass.rental_crawler.model.RentalDetailDTO;
+import tw.grass.rental_crawler.repositories.RentalDetailRepository;
 import tw.grass.rental_crawler.service.RentalCrawlerService;
 
 @Service
 public class RentalCrawlerServiceImpl implements RentalCrawlerService {
 
     Logger log = LoggerFactory.getLogger(RentalCrawlerService.class);
+
+    @Autowired
+    private RentalDetailRepository rentalDetailRepository;
 
     @Value("${webdriver.name}")
     private String webdriverName;
@@ -52,9 +57,18 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
         try {
             // 這邊使用591的條件other=newPost:新上架、sort=posttime_desc:排序為新到舊
             Document doc = getJsoupDoc("https://rent.591.com.tw/list?other=newPost&sort=posttime_desc");
-            List<RentalCatalogDTO> rentaInfoList = parseRentalCatalog(doc);
+            List<RentalCatalogDTO> rentaCatalogList = parseRentalCatalog(doc);
+            
+            // 591一頁為30個租屋資訊，所以當有30筆新資料時，去第二頁再做一次
+            if (rentaCatalogList.size() == 30) {
+                log.info("第一頁皆為新資料，去第二頁進行爬去");
+                doc = getJsoupDoc("https://rent.591.com.tw/list?other=newPost&sort=posttime_desc&page=2");
+                rentaCatalogList.addAll(parseRentalCatalog(doc));
+            }
+            
+            rentaCatalogList = rentaCatalogList.stream().limit(3).collect(Collectors.toList());
             log.info("Successfully fetched rental data");
-            return rentaInfoList;
+            return rentaCatalogList;
         } catch (Exception e) {
             log.error("Error while fetching rental data", e);
             return Collections.emptyList();
@@ -95,19 +109,35 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             String distanceToMrtName = listing.select("div.item-info-txt i.house-metro").next().text();
             String distanceToMRT = listing.select("div.item-info-txt i.house-metro").next().next().text();
 
-            RentalCatalogDTO rentalIfo = new RentalCatalogDTO();
-            rentalIfo.setTitle(title);
-            rentalIfo.setLink(link);
-            rentalIfo.setAddress(address);
-            rentalIfo.setPrice(price);
-            rentalIfo.setFloorAndArea(floorAndArea);
-            rentalIfo.setDistanceToMRT(distanceToMrtName + distanceToMRT);
-            list.add(rentalIfo);
+            //確認是否有重複資料
+            RentalDetail findByLink = rentalDetailRepository.findByLink(link);
+            
+            //沒有就寫入，有就跳過
+            if (findByLink == null) {
+                RentalCatalogDTO rentalIfo = new RentalCatalogDTO();
+                setRentalCatalogValue(title, link, address, price, floorAndArea, distanceToMrtName, distanceToMRT, rentalIfo);
+                list.add(rentalIfo);
 
+                //寫入資料庫
+                RentalDetail entity = new RentalDetail();
+                entity.setLink(link);
+                rentalDetailRepository.save(entity);
+                log.info("寫入:{}", title);
+            } else {
+                log.info("重複:{}", title);
+            }
         }
-
-        list = list.stream().limit(3).collect(Collectors.toList());
         return list;
+    }
+
+    private void setRentalCatalogValue(String title, String link, String address, String price, String floorAndArea,
+            String distanceToMrtName, String distanceToMRT, RentalCatalogDTO rentalIfo) {
+        rentalIfo.setTitle(title);
+        rentalIfo.setLink(link);
+        rentalIfo.setAddress(address);
+        rentalIfo.setPrice(price);
+        rentalIfo.setFloorAndArea(floorAndArea);
+        rentalIfo.setDistanceToMRT(distanceToMrtName + distanceToMRT);
     }
 
     @Override
