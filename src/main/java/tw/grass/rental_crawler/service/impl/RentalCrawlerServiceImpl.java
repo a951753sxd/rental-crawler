@@ -147,10 +147,11 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
         Document doc = getJsoupDoc(detailUrl);
 
         RentalDetailDTO rentalDetail = parseRentalDetail(doc);
-        rentalDetail.setAddress(rentalDetail.getAddress());
-        rentalDetail.setPrice(rentalDetail.getPrice());
-        rentalDetail.setFloorAndArea(rentalDetail.getFloorAndArea());
+        rentalDetail.setAddress(rentalCatalog.getAddress());
+        rentalDetail.setPrice(rentalCatalog.getPrice());
+        rentalDetail.setFloorAndArea(rentalCatalog.getFloorAndArea());
 
+        log.info(rentalDetail.getInfo());
         return rentalDetail;
     }
 
@@ -181,7 +182,6 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
         rentalDetail.setHasLift(!doc.select("dl:has(i.house-lift)").hasClass("del"));
         rentalDetail.setHasParking(!doc.select("dl:has(i.house-parking)").hasClass("del"));
 
-        log.info(rentalDetail.getInfo());
         return rentalDetail;
     }
 }

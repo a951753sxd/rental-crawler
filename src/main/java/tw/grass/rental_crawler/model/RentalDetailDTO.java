@@ -27,6 +27,12 @@ public class RentalDetailDTO {
 
     public String getInfo() {
         StringBuilder sb = new StringBuilder();
+        sb.append("Address: " + address);
+        sb.append("\n");
+        sb.append("Price: " + price);
+        sb.append("\n");
+        sb.append("FloorAndArea: " + floorAndArea);
+        sb.append("\n");
         sb.append("Rental Description: " + rentalDescription);
         sb.append("\n");
         sb.append("House Rules: " + houseRules);
