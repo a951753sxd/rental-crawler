@@ -31,7 +31,15 @@ public class DiscordBotRunner implements ApplicationRunner {
 
         // 延遲三秒，不延遲的話訊息會發不出去
         Thread.sleep(3000);
-        sendMessage(jda, "替換成你的Channel ID", "小草您好。");
+        tagUserAndSendMessage(jda, "替換成你的Channel ID", "替換成你的User ID", "小草您好。");
+    }
+
+    public void tagUserAndSendMessage(JDA jda, String channelId, String userId, String message) {
+        TextChannel channel = jda.getTextChannelById(channelId);
+        if (channel != null) {
+            String taggedMessage = "<@" + userId + "> " + message;
+            channel.sendMessage(taggedMessage).queue();
+        }
     }
 
     public static void sendMessage(JDA jda, String channelId, String message) {
