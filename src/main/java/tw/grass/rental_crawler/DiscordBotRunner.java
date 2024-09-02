@@ -9,9 +9,8 @@ import org.springframework.stereotype.Component;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import tw.grass.rental_crawler.listener.DiscordBotListener;
 
 @Component
 public class DiscordBotRunner implements ApplicationRunner {
@@ -30,13 +29,4 @@ public class DiscordBotRunner implements ApplicationRunner {
         JDA jda = builder.build();
         log.info("Discord bot creation completed.");
     }
-
-    class DiscordBotListener extends ListenerAdapter {
-        @Override
-        public void onMessageReceived(MessageReceivedEvent event) {
-            String message = event.getMessage().getContentRaw();
-            log.info("Received: {}", message);
-        }
-    }
-
 }
