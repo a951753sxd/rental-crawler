@@ -1,51 +1,21 @@
 package tw.grass.rental_crawler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.requests.GatewayIntent;
-import tw.grass.rental_crawler.listener.DiscordBotListener;
+import tw.grass.rental_crawler.service.DiscordBotService;
 
 @Component
 public class DiscordBotRunner implements ApplicationRunner {
 
-    @Value("${discord.token}")
-    private String discordToken;
-
-    Logger log = LoggerFactory.getLogger(DiscordBotRunner.class);
+    @Autowired
+    DiscordBotService discordBotService;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        JDABuilder builder = JDABuilder.createDefault(discordToken);
-        builder.enableIntents(GatewayIntent.MESSAGE_CONTENT); // 啟用 MESSAGE_CONTENT Intent
-        builder.addEventListeners(new DiscordBotListener());
-        JDA jda = builder.build();
-        log.info("Discord bot creation completed.");
-
-        // 延遲三秒，不延遲的話訊息會發不出去
-        Thread.sleep(3000);
-        tagUserAndSendMessage(jda, "替換成你的Channel ID", "替換成你的User ID", "小草您好。");
+        discordBotService.sendMessage("你的Channel Id", "使用Service服務發送訊息。");
     }
 
-    public void tagUserAndSendMessage(JDA jda, String channelId, String userId, String message) {
-        TextChannel channel = jda.getTextChannelById(channelId);
-        if (channel != null) {
-            String taggedMessage = "<@" + userId + "> " + message;
-            channel.sendMessage(taggedMessage).queue();
-        }
-    }
-
-    public static void sendMessage(JDA jda, String channelId, String message) {
-        TextChannel channel = jda.getTextChannelById(channelId);
-        if (channel != null) {
-            channel.sendMessage(message).queue();
-        }
-    }
 }
