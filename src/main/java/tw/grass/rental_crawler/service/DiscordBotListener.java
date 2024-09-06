@@ -24,23 +24,34 @@ public class DiscordBotListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        // 過濾掉機器人傳送的訊息
         if (event.getAuthor().isBot())
             return;
+
         String message = event.getMessage().getContentRaw();
         if (message.startsWith("!")) {
             String channelId = event.getChannel().getId();
             log.info("所在頻道為: {}", channelId);
             String userId = event.getAuthor().getId();
             log.info("下指令者為: {}", userId);
-
             log.info("收到指令: {}", message);
-            if (message.startsWith("!help")) {
-                EmbedBuilder embed = discordBotCommandService.helpCommand();
-                discordBotService.sendMessage(channelId, embed);
-            }
-            
+            doBotCommand(message, channelId, userId);
         }
+    }
+
+    private void doBotCommand(String message, String channelId, String userId) {
+        EmbedBuilder botResponeMessage;
+        if (message.startsWith("!help")) {
+            botResponeMessage = discordBotCommandService.helpCommand();
+        } else if (message.startsWith("!sub")) {
+            botResponeMessage = discordBotCommandService.subscribeCommand(userId, channelId);
+        } else if (message.startsWith("!unsub")) {
+            botResponeMessage = discordBotCommandService.unsubscribeCommand(userId);
+        } else if (message.startsWith("!info")) {
+            botResponeMessage = discordBotCommandService.showInfoCommand(userId);
+        } else {
+            botResponeMessage = discordBotCommandService.unKnowCommand();
+        }
+        discordBotService.sendMessage(channelId, botResponeMessage);
     }
 
     @Override

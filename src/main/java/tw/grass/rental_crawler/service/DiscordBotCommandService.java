@@ -12,34 +12,34 @@ public interface DiscordBotCommandService {
     /*
      * 訂閱指令，建議使用者設定好後再訂閱: ex: !sub
      */
-    String subscribeCommand(String userID, String channel);
+    EmbedBuilder subscribeCommand(String userID, String channel);
 
     /*
      * 解除訂閱指令: ex: !unsub
      */
-    String unsubscribeCommand(String userID);
+    EmbedBuilder unsubscribeCommand(String userID);
 
     /*
      * 清楚使用者定義的條件: ex: !reset
      */
-    String resetCommand(String userID);
+    EmbedBuilder resetCommand(String userID);
 
     /*
      * 用戶資訊顯示: ex: !info
      */
-    String showInfoCommand(String userID);
+    EmbedBuilder showInfoCommand(String userID);
 
     /*
      * 指定房型，可指定多個，使用空白分隔，新的指令覆蓋舊的 ex: !sp_room 整層住家 獨立套房
      * 可輸入選項:不限,整層住家,獨立套房,分租套房,雅房,車位,其他
      */
-    String specifyRoomTypeCommand(String userID, String inputSting);
+    EmbedBuilder specifyRoomTypeCommand(String userID, String inputSting);
 
     /*
      * 指定價格區間，新的指令覆蓋舊的 ex: !sp_price 10000~20000
      * 說明10000至20000 含10000及20000
      */
-    String specifyPriceCommand(String userID, String inputSting);
+    EmbedBuilder specifyPriceCommand(String userID, String inputSting);
 
     /*
      * 指定地址，可指定多個，使用空白分隔，新的指令覆蓋舊的
@@ -47,18 +47,20 @@ public interface DiscordBotCommandService {
      *  ex: !sp_Address 內湖區 士林區
      * 說明:10000至20000 含10000及20000
      */
-    String specifyAddressCommand(String userID, String inputSting);
+    EmbedBuilder specifyAddressCommand(String userID, String inputSting);
 
     /*
      * 指定樓層，新的指令覆蓋舊的  ex: !sp_floor 4
      * 說明:4樓
      */
-    String specifyFloorCommand(String userID, String inputSting);
+    EmbedBuilder specifyFloorCommand(String userID, String inputSting);
     /*
      * 指定設備，新的指令覆蓋舊的，可指定多個，使用空白分隔 ex: !sp_item 冰箱 洗衣機
      * 說明:需含冰箱及洗衣機
      * 可輸入選項:冰箱,洗衣機,電視,冷氣,熱水器,床,衣櫃,第四台,網路,天然瓦斯,沙發,桌子,陽台,電梯,車位
      */
-    String specifyItemCommand(String userID, String inputSting);
+    EmbedBuilder specifyItemCommand(String userID, String inputSting);
+
+    EmbedBuilder unKnowCommand();
 
 }
