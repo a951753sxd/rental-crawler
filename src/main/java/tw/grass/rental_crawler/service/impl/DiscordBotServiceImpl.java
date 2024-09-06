@@ -6,11 +6,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.requests.GatewayIntent;
-import tw.grass.rental_crawler.listener.DiscordBotListener;
 import tw.grass.rental_crawler.service.DiscordBotService;
 
 @Service
@@ -24,12 +23,9 @@ public class DiscordBotServiceImpl implements DiscordBotService {
     JDA jda;
 
     @PostConstruct
-    public void init() {
+    public void init() throws Exception {
         JDABuilder builder = JDABuilder.createDefault(discordToken);
-        builder.enableIntents(GatewayIntent.MESSAGE_CONTENT);
-        builder.addEventListeners(new DiscordBotListener());
         jda = builder.build();
-        log.info("Discord bot creation completed.");
     }
 
     @Override
@@ -47,6 +43,15 @@ public class DiscordBotServiceImpl implements DiscordBotService {
         if (channel != null) {
             String taggedMessage = "<@" + userId + "> " + message;
             channel.sendMessage(taggedMessage).queue();
+        }
+        return "success";
+    }
+
+    @Override
+    public String sendMessage(String channelId, EmbedBuilder embed) {
+        TextChannel channel = jda.getTextChannelById(channelId);
+        if (channel != null) {
+            channel.sendMessageEmbeds(embed.build()).queue();
         }
         return "success";
     }

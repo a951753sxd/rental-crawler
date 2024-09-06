@@ -1,11 +1,13 @@
 package tw.grass.rental_crawler.service;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+
 public interface DiscordBotCommandService {
 
     /*
      * 說明指令: ex: !help
      */
-    String helpCommand();
+    EmbedBuilder helpCommand();
 
     /*
      * 訂閱指令，建議使用者設定好後再訂閱: ex: !sub
@@ -15,7 +17,6 @@ public interface DiscordBotCommandService {
     /*
      * 解除訂閱指令: ex: !unsub
      */
-
     String unsubscribeCommand(String userID);
 
     /*
@@ -41,8 +42,9 @@ public interface DiscordBotCommandService {
     String specifyPriceCommand(String userID, String inputSting);
 
     /*
-     * 指定地址，可指定多個，使用空白分隔，新的指令覆蓋舊的  ex: !sp_Address 內湖區 士林區
-     * 大安區,內湖區,士林區,文山區,北投區,中山區,信義區,松山區,萬華區,中正區,大同區,南港區
+     * 指定地址，可指定多個，使用空白分隔，新的指令覆蓋舊的
+     * 可輸入選項:大安區,內湖區,士林區,文山區,北投區,中山區,信義區,松山區,萬華區,中正區,大同區,南港區
+     *  ex: !sp_Address 內湖區 士林區
      * 說明:10000至20000 含10000及20000
      */
     String specifyAddressCommand(String userID, String inputSting);

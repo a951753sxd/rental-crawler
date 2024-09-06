@@ -1,14 +1,24 @@
-package tw.grass.rental_crawler.listener;
+package tw.grass.rental_crawler.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+@Service
 public class DiscordBotListener extends ListenerAdapter {
+
+    @Autowired
+    DiscordBotService discordBotService;
+
+    @Autowired
+    DiscordBotCommandService discordBotCommandService;
 
     Logger log = LoggerFactory.getLogger(ListenerAdapter.class);
 
@@ -19,13 +29,17 @@ public class DiscordBotListener extends ListenerAdapter {
             return;
         String message = event.getMessage().getContentRaw();
         if (message.startsWith("!")) {
-            log.info("收到指令: {}", message);
-            
             String channelId = event.getChannel().getId();
             log.info("所在頻道為: {}", channelId);
             String userId = event.getAuthor().getId();
             log.info("下指令者為: {}", userId);
-            // 這裡可以加入解析指令的邏輯
+
+            log.info("收到指令: {}", message);
+            if (message.startsWith("!help")) {
+                EmbedBuilder embed = discordBotCommandService.helpCommand();
+                discordBotService.sendMessage(channelId, embed);
+            }
+            
         }
     }
 
