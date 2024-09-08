@@ -1,5 +1,7 @@
 package tw.grass.rental_crawler.service;
 
+import java.util.Set;
+
 import net.dv8tion.jda.api.EmbedBuilder;
 
 public interface DiscordBotCommandService {
@@ -33,13 +35,13 @@ public interface DiscordBotCommandService {
      * 指定房型，可指定多個，使用空白分隔，新的指令覆蓋舊的 ex: !sp_room 整層住家 獨立套房
      * 可輸入選項:不限,整層住家,獨立套房,分租套房,雅房,車位,其他
      */
-    EmbedBuilder specifyRoomTypeCommand(String userID, String inputSting);
+    EmbedBuilder specifyRoomTypeCommand(String userID, Set<String> arguments);
 
     /*
      * 指定價格區間，新的指令覆蓋舊的 ex: !sp_price 10000~20000
      * 說明10000至20000 含10000及20000
      */
-    EmbedBuilder specifyPriceCommand(String userID, String inputSting);
+    EmbedBuilder specifyPriceCommand(String userID, Set<String> arguments);
 
     /*
      * 指定地址，可指定多個，使用空白分隔，新的指令覆蓋舊的
@@ -47,19 +49,19 @@ public interface DiscordBotCommandService {
      *  ex: !sp_Address 內湖區 士林區
      * 說明:10000至20000 含10000及20000
      */
-    EmbedBuilder specifyAddressCommand(String userID, String inputSting);
+    EmbedBuilder specifyAddressCommand(String userID, Set<String> arguments);
 
     /*
      * 指定樓層，新的指令覆蓋舊的  ex: !sp_floor 4
      * 說明:4樓
      */
-    EmbedBuilder specifyFloorCommand(String userID, String inputSting);
+    EmbedBuilder specifyFloorCommand(String userID, Set<String> arguments);
     /*
      * 指定設備，新的指令覆蓋舊的，可指定多個，使用空白分隔 ex: !sp_item 冰箱 洗衣機
      * 說明:需含冰箱及洗衣機
      * 可輸入選項:冰箱,洗衣機,電視,冷氣,熱水器,床,衣櫃,第四台,網路,天然瓦斯,沙發,桌子,陽台,電梯,車位
      */
-    EmbedBuilder specifyItemCommand(String userID, String inputSting);
+    EmbedBuilder specifyItemCommand(String userID, Set<String> arguments);
 
     EmbedBuilder unKnowCommand();
 

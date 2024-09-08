@@ -1,6 +1,7 @@
 package tw.grass.rental_crawler.service.impl;
 
 import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class DiscordBotCommandServiceImpl implements DiscordBotCommandService {
         embedBuilder.addField("`!sp_price`", "指定價格區間，格式為 最低價格~最高價格。範例: `!sp_price 10000~20000`", false);
         embedBuilder.addField("`!sp_address`",
                 "指定搜尋地區或地址。可選項: 大安區,內湖區,士林區,文山區,北投區,中山區,信義區,松山區,萬華區,中正區,大同區,南港區, 等。範例: `!sp_address 內湖區`", false);
-        embedBuilder.addField("`!sp_floor`", "指定樓層。範例: `!sp_floor 4`", false);
+        embedBuilder.addField("`!sp_floor`", "指定樓層區間。範例: `!sp_floor 4~6`", false);
         embedBuilder.addField("`!sp_item`",
                 "指定房屋設備要求。可選項: 冰箱,洗衣機,電視,冷氣,熱水器,床,衣櫃,第四台,網路,天然瓦斯,沙發,桌子,陽台,電梯,車位。範例: `!sp_item 冰箱 洗衣機`", false);
 
@@ -71,12 +72,9 @@ public class DiscordBotCommandServiceImpl implements DiscordBotCommandService {
 
     @Override
     public EmbedBuilder showInfoCommand(String userID) {
-        SubscribeUser findByUserId = subscribeUserRepository.findByUserId(userID);
-        if (Objects.nonNull(findByUserId) && findByUserId.getIsSubscribe()) {
-            return stringToEmbed("目前有訂閱");
-        } else {
-            return stringToEmbed("目前無訂閱");
-        }
+        SubscribeUser subscribeUser = subscribeUserRepository.findByUserId(userID);
+
+        return subscribeUser.toEmbed();
     }
 
     private SubscribeUser getOrNewSubscribeUser(String userID, String channel) {
@@ -84,8 +82,8 @@ public class DiscordBotCommandServiceImpl implements DiscordBotCommandService {
         if (Objects.isNull(subscribeUser)) {
             subscribeUser = new SubscribeUser();
             subscribeUser.setUserId(userID);
-            subscribeUser.setChannelId(channel);
         }
+        subscribeUser.setChannelId(channel);
         return subscribeUser;
     }
 
@@ -97,38 +95,74 @@ public class DiscordBotCommandServiceImpl implements DiscordBotCommandService {
 
     @Override
     public EmbedBuilder resetCommand(String userID) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'resetCommand'");
+        // 獲取用戶資料，若不存在則新建一個空的訂閱用戶
+        SubscribeUser subscribeUser = getOrNewSubscribeUser(userID, "");
+
+        // 訂閱狀態也解除
+        subscribeUser.setIsSubscribe(false);
+        // 清空用戶的所有設定
+        subscribeUser.getRooms().clear();// 清空房型
+        subscribeUser.getAddress().clear();// 清空地址
+        subscribeUser.getItems().clear();// 清空設備
+        subscribeUser.setLowestPrice(null); // 清空最低價格
+        subscribeUser.setHighestPrice(null); // 清空最高價格
+        subscribeUser.setLowestFloor(null); // 清空最低樓層
+        subscribeUser.setHighestFloor(null); // 清空最高樓層
+
+        // 儲存變更到資料庫
+        subscribeUserRepository.save(subscribeUser);
+
+        // 返回重置成功的回應
+        return stringToEmbed("所有租屋條件已重置成功！");
     }
 
     @Override
-    public EmbedBuilder specifyRoomTypeCommand(String userID, String inputSting) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'specifyRoomTypeCommand'");
+    public EmbedBuilder specifyPriceCommand(String userID, Set<String> arguments) {
+        SubscribeUser subscribeUser = getOrNewSubscribeUser(userID, "");
+        String argumentString = arguments.iterator().next();
+        String[] messageParts = argumentString.split("~", 2);
+        subscribeUser.setLowestPrice(Integer.valueOf(messageParts[0]));
+        subscribeUser.setHighestPrice(Integer.valueOf(messageParts[1]));
+        subscribeUserRepository.save(subscribeUser);
+        return stringToEmbed("價格區間新增成功");
     }
 
     @Override
-    public EmbedBuilder specifyPriceCommand(String userID, String inputSting) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'specifyPriceCommand'");
+    public EmbedBuilder specifyFloorCommand(String userID, Set<String> arguments) {
+        SubscribeUser subscribeUser = getOrNewSubscribeUser(userID, "");
+        String argumentString = arguments.iterator().next();
+        String[] messageParts = argumentString.split("~", 2);
+        subscribeUser.setLowestFloor(Integer.valueOf(messageParts[0]));
+        subscribeUser.setHighestFloor(Integer.valueOf(messageParts[1]));
+        subscribeUserRepository.save(subscribeUser);
+        return stringToEmbed("樓層區間新增成功");
     }
 
     @Override
-    public EmbedBuilder specifyAddressCommand(String userID, String inputSting) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'specifyAddressCommand'");
+    public EmbedBuilder specifyRoomTypeCommand(String userID, Set<String> arguments) {
+        SubscribeUser subscribeUser = getOrNewSubscribeUser(userID, "");
+        subscribeUser.setRooms(arguments);
+        subscribeUserRepository.save(subscribeUser);
+
+        return stringToEmbed("房型類別新增成功");
     }
 
     @Override
-    public EmbedBuilder specifyFloorCommand(String userID, String inputSting) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'specifyFloorCommand'");
+    public EmbedBuilder specifyAddressCommand(String userID, Set<String> arguments) {
+        SubscribeUser subscribeUser = getOrNewSubscribeUser(userID, "");
+        subscribeUser.setAddress(arguments);
+        subscribeUserRepository.save(subscribeUser);
+
+        return stringToEmbed("地址、地區新增成功");
     }
 
     @Override
-    public EmbedBuilder specifyItemCommand(String userID, String inputSting) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'specifyItemCommand'");
+    public EmbedBuilder specifyItemCommand(String userID, Set<String> arguments) {
+        SubscribeUser subscribeUser = getOrNewSubscribeUser(userID, "");
+        subscribeUser.setItems(arguments);
+        subscribeUserRepository.save(subscribeUser);
+
+        return stringToEmbed("設備新增成功");
     }
 
     @Override
