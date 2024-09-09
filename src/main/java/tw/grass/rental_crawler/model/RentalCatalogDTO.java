@@ -8,6 +8,7 @@ public class RentalCatalogDTO {
     private String link;
     private String address;
     private String price;
+    private String roomType;
     private String floorAndArea;
     private String distanceToMRT;
 }

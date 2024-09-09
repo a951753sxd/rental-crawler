@@ -104,6 +104,7 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             String title = listing.select("a.link").attr("title");
             String link = listing.select("a.link").attr("href");
             String address = listing.select("div.item-info-txt i.house-place").next().text();
+            String roomType = listing.select("div.item-info-txt i.house-home").next().text();
             String price = listing.select("div.item-info-price strong").text();
             String floorAndArea = listing.select("div.item-info-txt").get(1).text();
             String distanceToMrtName = listing.select("div.item-info-txt i.house-metro").next().text();
@@ -115,13 +116,13 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             //沒有就寫入，有就跳過
             if (findByLink == null) {
                 RentalCatalogDTO rentalIfo = new RentalCatalogDTO();
-                setRentalCatalogValue(title, link, address, price, floorAndArea, distanceToMrtName, distanceToMRT, rentalIfo);
+                setRentalCatalogValue(title, link, address, price, floorAndArea, distanceToMrtName, distanceToMRT, rentalIfo,roomType);
                 list.add(rentalIfo);
 
                 //寫入資料庫
                 RentalDetail entity = new RentalDetail();
                 entity.setLink(link);
-                rentalDetailRepository.save(entity);
+                // rentalDetailRepository.save(entity);
                 log.info("寫入:{}", title);
             } else {
                 log.info("重複:{}", title);
@@ -131,13 +132,14 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
     }
 
     private void setRentalCatalogValue(String title, String link, String address, String price, String floorAndArea,
-            String distanceToMrtName, String distanceToMRT, RentalCatalogDTO rentalIfo) {
+            String distanceToMrtName, String distanceToMRT, RentalCatalogDTO rentalIfo, String roomType) {
         rentalIfo.setTitle(title);
         rentalIfo.setLink(link);
         rentalIfo.setAddress(address);
         rentalIfo.setPrice(price);
         rentalIfo.setFloorAndArea(floorAndArea);
         rentalIfo.setDistanceToMRT(distanceToMrtName + distanceToMRT);
+        rentalIfo.setRoomType(roomType);
     }
 
     @Override
@@ -150,6 +152,8 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
         rentalDetail.setAddress(rentalCatalog.getAddress());
         rentalDetail.setPrice(rentalCatalog.getPrice());
         rentalDetail.setFloorAndArea(rentalCatalog.getFloorAndArea());
+        rentalDetail.setLink(rentalCatalog.getLink());
+        rentalDetail.setRoomType(rentalCatalog.getRoomType());
 
         log.info(rentalDetail.getInfo());
         return rentalDetail;

@@ -6,6 +6,8 @@ import lombok.Data;
 public class RentalDetailDTO {
     String rentalDescription;
     String houseRules;
+    String link;
+    String roomType;
     String address;
     String price;
     String floorAndArea;
@@ -36,6 +38,10 @@ public class RentalDetailDTO {
         sb.append("Rental Description: " + rentalDescription);
         sb.append("\n");
         sb.append("House Rules: " + houseRules);
+        sb.append("\n");
+        sb.append("Link: " + link);
+        sb.append("\n");
+        sb.append("房型: " + roomType);
         sb.append("\n");
         sb.append("冰箱:" + (hasFridge ? "有" : "無"));
         sb.append("\n");

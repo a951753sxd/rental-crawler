@@ -24,11 +24,11 @@ public class SubscribeUser {
 
     private String channelId;
     private String userId;
-    private Boolean isSubscribe;
-    private Integer lowestPrice;
-    private Integer highestPrice;
-    private Integer lowestFloor;
-    private Integer highestFloor;
+    private Boolean isSubscribe = false;
+    private Integer lowestPrice = 0;
+    private Integer highestPrice = Integer.MAX_VALUE;
+    private Integer lowestFloor = 0;
+    private Integer highestFloor = Integer.MAX_VALUE;
     // 使用 @ElementCollection 儲存房型列表
     @ElementCollection(fetch = FetchType.EAGER) //關閉延遲加載
     @CollectionTable(name = "user_rooms", joinColumns = @JoinColumn(name = "user_id"))

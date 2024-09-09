@@ -104,10 +104,10 @@ public class DiscordBotCommandServiceImpl implements DiscordBotCommandService {
         subscribeUser.getRooms().clear();// 清空房型
         subscribeUser.getAddress().clear();// 清空地址
         subscribeUser.getItems().clear();// 清空設備
-        subscribeUser.setLowestPrice(null); // 清空最低價格
-        subscribeUser.setHighestPrice(null); // 清空最高價格
-        subscribeUser.setLowestFloor(null); // 清空最低樓層
-        subscribeUser.setHighestFloor(null); // 清空最高樓層
+        subscribeUser.setLowestPrice(0); // 清空最低價格
+        subscribeUser.setHighestPrice(Integer.MAX_VALUE); // 清空最高價格
+        subscribeUser.setLowestFloor(0); // 清空最低樓層
+        subscribeUser.setHighestFloor(Integer.MAX_VALUE); // 清空最高樓層
 
         // 儲存變更到資料庫
         subscribeUserRepository.save(subscribeUser);
