@@ -122,7 +122,7 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
                 //寫入資料庫
                 RentalDetail entity = new RentalDetail();
                 entity.setLink(link);
-                // rentalDetailRepository.save(entity);
+                rentalDetailRepository.save(entity);
                 log.info("寫入:{}", title);
             } else {
                 log.info("重複:{}", title);

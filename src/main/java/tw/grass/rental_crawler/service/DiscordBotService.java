@@ -6,4 +6,5 @@ public interface DiscordBotService {
     String sendMessage(String channelId, String message);
     String tagUserAndSendMessage(String channelId, String userId, String message);
     String sendMessage(String channelId, EmbedBuilder embed);
+    String tagUserAndSendMessage(String channelId, String userId, EmbedBuilder embed);
 }

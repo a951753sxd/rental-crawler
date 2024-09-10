@@ -56,4 +56,15 @@ public class DiscordBotServiceImpl implements DiscordBotService {
         return "success";
     }
 
+    @Override
+    public String tagUserAndSendMessage(String channelId, String userId, EmbedBuilder embed) {
+        TextChannel channel = jda.getTextChannelById(channelId);
+        if (channel != null) {
+            String taggedMessage = "<@" + userId + "> ";
+            channel.sendMessage(taggedMessage)
+            .setEmbeds(embed.build()).queue();
+        }
+        return "success";
+    }
+
 }
