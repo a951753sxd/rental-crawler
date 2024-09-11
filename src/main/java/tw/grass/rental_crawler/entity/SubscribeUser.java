@@ -22,7 +22,7 @@ public class SubscribeUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String channelId;
+    private String channelId = "";
     private String userId;
     private Boolean isSubscribe = false;
     private Integer lowestPrice = 0;
@@ -66,7 +66,7 @@ public class SubscribeUser {
         // 處理樓層區間
         String floorRange = (lowestFloor != null ? lowestFloor : "無下限") + " ~ "
                 + (highestFloor != null ? highestFloor : "無上限");
-        embedBuilder.addField("價格區間", floorRange, false);
+        embedBuilder.addField("樓層區間", floorRange, false);
 
         // 處理房型
         embedBuilder.addField("房型條件", rooms.isEmpty() ? "無指定" : String.join(", ", rooms), false);

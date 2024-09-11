@@ -54,6 +54,7 @@ public class DiscordBotCommandServiceImpl implements DiscordBotCommandService {
 
         // 目前沒有多個訂閱的機制，每次更新都覆蓋掉之前的資料
         SubscribeUser subscribeUser = getOrNewSubscribeUser(userID, channel);
+        subscribeUser.setChannelId(channel);
         subscribeUser.setIsSubscribe(true);
         subscribeUserRepository.save(subscribeUser);
 
@@ -83,7 +84,6 @@ public class DiscordBotCommandServiceImpl implements DiscordBotCommandService {
             subscribeUser = new SubscribeUser();
             subscribeUser.setUserId(userID);
         }
-        subscribeUser.setChannelId(channel);
         return subscribeUser;
     }
 
