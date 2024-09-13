@@ -1,11 +1,14 @@
 package tw.grass.rental_crawler.service.impl;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -20,9 +23,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+import tw.grass.rental_crawler.entity.Proxy;
 import tw.grass.rental_crawler.entity.RentalDetail;
 import tw.grass.rental_crawler.model.RentalCatalogDTO;
 import tw.grass.rental_crawler.model.RentalDetailDTO;
+import tw.grass.rental_crawler.repositories.ProxyRepository;
 import tw.grass.rental_crawler.repositories.RentalDetailRepository;
 import tw.grass.rental_crawler.service.RentalCrawlerService;
 
@@ -33,6 +38,9 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
 
     @Autowired
     private RentalDetailRepository rentalDetailRepository;
+
+    @Autowired
+    private ProxyRepository proxyRepository;
 
     @Value("${webdriver.name}")
     private String webdriverName;
@@ -58,14 +66,14 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             // 這邊使用591的條件other=newPost:新上架、sort=posttime_desc:排序為新到舊
             Document doc = getJsoupDoc("https://rent.591.com.tw/list?other=newPost&sort=posttime_desc");
             List<RentalCatalogDTO> rentaCatalogList = parseRentalCatalog(doc);
-            
+
             // 591一頁為30個租屋資訊，所以當有30筆新資料時，去第二頁再做一次
             if (rentaCatalogList.size() == 30) {
                 log.info("第一頁皆為新資料，去第二頁進行爬去");
                 doc = getJsoupDoc("https://rent.591.com.tw/list?other=newPost&sort=posttime_desc&page=2");
                 rentaCatalogList.addAll(parseRentalCatalog(doc));
             }
-            
+
             rentaCatalogList = rentaCatalogList.stream().limit(3).collect(Collectors.toList());
             log.info("Successfully fetched rental data");
             return rentaCatalogList;
@@ -76,10 +84,27 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
     }
 
     private Document getJsoupDoc(String urlString) {
-        driver.get(urlString);
-        String pageSource = driver.getPageSource();
-        Document doc = Jsoup.parse(pageSource);
-        return doc;
+
+        List<Proxy> proxies = proxyRepository.findAll();
+        Proxy randomProxy = proxies.get(new Random().nextInt(proxies.size()));
+
+        log.info("use proxy ip:{}:{}", randomProxy.getIp(), String.valueOf(randomProxy.getPort()));
+
+        Connection connection = Jsoup.connect(urlString)
+                .proxy(randomProxy.getIp(), randomProxy.getPort())
+                .timeout(10000);
+
+        // Add headers or user-agent if needed
+        Document doc = null;
+        try {
+            doc = connection.get();
+            log.info("use proxy ip:{}:{} => OK", randomProxy.getIp(), String.valueOf(randomProxy.getPort()));
+            return doc;
+        } catch (IOException e) {
+            log.error("proxy連線異常,message:{}", e);
+            return getJsoupDoc(urlString);
+        }
+
     }
 
     private void webDriverInit() {
@@ -110,16 +135,17 @@ public class RentalCrawlerServiceImpl implements RentalCrawlerService {
             String distanceToMrtName = listing.select("div.item-info-txt i.house-metro").next().text();
             String distanceToMRT = listing.select("div.item-info-txt i.house-metro").next().next().text();
 
-            //確認是否有重複資料
+            // 確認是否有重複資料
             RentalDetail findByLink = rentalDetailRepository.findByLink(link);
-            
-            //沒有就寫入，有就跳過
+
+            // 沒有就寫入，有就跳過
             if (findByLink == null) {
                 RentalCatalogDTO rentalIfo = new RentalCatalogDTO();
-                setRentalCatalogValue(title, link, address, price, floorAndArea, distanceToMrtName, distanceToMRT, rentalIfo,roomType);
+                setRentalCatalogValue(title, link, address, price, floorAndArea, distanceToMrtName, distanceToMRT,
+                        rentalIfo, roomType);
                 list.add(rentalIfo);
 
-                //寫入資料庫
+                // 寫入資料庫
                 RentalDetail entity = new RentalDetail();
                 entity.setLink(link);
                 rentalDetailRepository.save(entity);
